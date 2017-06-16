@@ -35,17 +35,9 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
 
     private MeetyouConfiguration meetyouConfiguration = new MeetyouConfiguration("blackhand.pro");
-    private ArrayList<ConfigurationDO> mInclude;
-    private int clazzindex = 1;
-    private ArrayList<String> mBuildDirs = new ArrayList<>();
-    private String mInjectPkg = "com/meetyou/anna/inject/support";
-    private String minjectClass = "AnnaProjectInject"
-    private boolean mNeedInject = false;
-    //metas
-    private HashMap<String, ArrayList<String>> mMetas = new HashMap<>();
 
     void apply(Project project) {
-        println '==============anna apply start=================='
+        println '==============blackhand apply start=================='
 
         //处理配置文件
         meetyouConfiguration.process();
@@ -55,7 +47,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
         def android = project.extensions.getByType(AppExtension);
         android.registerTransform(this)
 
-        println '==============anna apply end=================='
+        println '==============blackhand apply end=================='
     }
 
 
@@ -156,10 +148,10 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
     }
 
     void processMetas(BlackhandClassVisitor cv, ClassWriter classWriter) throws Exception{
-        println cv.mClazzName + "---" + cv.mSuperName
-        for(BlackhandMethodInfo info : cv.mMethods){
-            println info.toString()
-        }
+        println cv.mClazzName + ":" + cv.mSuperName
+//        for(BlackhandMethodInfo info : cv.mMethods){
+//            println info.toString()
+//        }
 
         HashMap<String,ArrayList<ConfigurationDO>> configurations = meetyouConfiguration.getMap();
         for (Map.Entry<String,ArrayList<ConfigurationDO>> entry : configurations.entrySet()) {
@@ -169,83 +161,85 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                 //继承处理
                 String clazz = key_words[1];
                 if(cv.mSuperName.equals(clazz)){
-                    println "Blackhand working ----- > processing this clazz "
-                    for(ConfigurationDO configurationDO : entry.value){
-
-                        String[] con = configurationDO.strings
-                        //处理修饰符
-                        int access = processAccess(con[0])
-                        //返回类型
-                        String return_type = con[1]
-
-                        //方法名
-                        String methodName = con[2]
-
-                        //参数
-                        String params = con[3]
-
-                        String return_v = null;
-
-                        if(!return_type.trim().equals("V")){
-                            //返回值,返回非void的时候
-                            return_v = con[4]
-                        }
-
-                        //遍历当前类,查看是否已经存在该插入方法
-                        boolean isNeedInsert = needInsert(cv, methodName, params);
-                        //存在方法直接跳过处理
-                        if(!isNeedInsert){
-                            continue
-                        }
-
-                        int return_num = 0 ;
-                        int param_num = 0;
-
-                        //处理,暂时不支持抛出异常
-                        MethodVisitor mw = classWriter.visitMethod(access,
-                                methodName,
-                                params + return_type,
-                                null,
-                                null);
-                        mw.visitCode();
-                        if(return_v != null){
-                            return_num = 1;
-                            if(return_v.trim().equals("null") || return_v.trim().equals("NULL")){
-                                mw.visitInsn(Opcodes.ACONST_NULL);
-                            }else{
-                                mw.visitLdcInsn(return_v.trim())
-                            }
-                        }
-
-                        BlackhandUtil.returnResult(mw, return_type);
-                        //第一个数字代表返回值情况,第二个代表几个入参
-                        mw.visitMaxs(0, 0);
-                        mw.visitEnd()
-
-                    }
+                    processTheClazz(entry, cv, classWriter)
                 }
             }else if(key_words[0].startsWith("implements")){
                 //实现处理
                 String clazz = key_words[1];
-                if(cv.mSuperName.equals(clazz)){
-                    //处理
-
+                for(String interface_item : cv.mInterfaces){
+                    if(interface_item.replace("/",".").equals(clazz)){
+                        //符合处理判断
+                        processTheClazz(entry, cv, classWriter)
+                    }
                 }
             }else if(key_words[0].startsWith("class")){
                 //源文件处理
                 String clazz = key_words[1];
-                if(cv.mSuperName.equals(clazz)){
+                if(cv.mClazzName.equals(clazz)){
                     //处理
-
+                    processTheClazz(entry, cv, classWriter)
                 }
             }
+        }
+    }
+
+    void processTheClazz(Map.Entry<String,ArrayList<ConfigurationDO>> entry,BlackhandClassVisitor cv, ClassWriter classWriter){
+        println "Blackhand working ----- > processing this clazz "
+        for(ConfigurationDO configurationDO : entry.value){
+
+            String[] con = configurationDO.strings
+            //处理修饰符
+            int access = processAccess(con[0])
+            //返回类型
+            String return_type = con[1]
+
+            //方法名
+            String methodName = con[2]
+
+            //参数
+            String params = con[3]
+
+            String return_v = null;
+
+            if(!return_type.trim().equals("V")){
+                //返回值,返回非void的时候
+                return_v = con[4]
+            }
+
+            //遍历当前类,查看是否已经存在该插入方法
+            boolean isNeedInsert = needInsert(cv, methodName, params);
+            //存在方法直接跳过处理
+            if(!isNeedInsert){
+                continue
+            }
+
+            //处理,暂时不支持抛出异常
+            MethodVisitor mw = classWriter.visitMethod(access,
+                    methodName,
+                    params + return_type,
+                    null,
+                    null);
+            mw.visitCode();
+            if(return_v != null){
+                if(return_v.trim().equals("null") || return_v.trim().equals("NULL")){
+                    mw.visitInsn(Opcodes.ACONST_NULL);
+                }else{
+                    mw.visitLdcInsn(return_v.trim())
+                }
+            }
+
+            BlackhandUtil.returnResult(mw, return_type);
+            //第一个数字代表返回值情况,第二个代表几个入参
+            mw.visitMaxs(0, 0);
+            mw.visitEnd()
+
         }
     }
 
     @Override
     void transform(Context context, Collection<TransformInput> inputs, Collection<TransformInput> referencedInputs,
                    TransformOutputProvider outputProvider, boolean isIncremental) throws IOException, TransformException, InterruptedException {
-        println '==================anna transform start=================='
+        println '==================blackhand transform start=================='
 
         //遍历inputs里的TransformInput
         inputs.each { TransformInput input ->
@@ -362,7 +356,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
 
                 def dest = outputProvider.getContentLocation(jarName + md5Name,
                         jarInput.contentTypes, jarInput.scopes, Format.JAR)
-                println 'Anna-----> copy to Jar:' + dest.absolutePath
+                println 'Blackhand-----> copy to Jar:' + dest.absolutePath
                 if(tmpFile == null) {
                     FileUtils.copyFile(jarInput.file, dest)
                 }else{
@@ -392,7 +386,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
 //        jarOutputStream.close();
 ////        jarFile.close();
 
-        println '==================Anna transform end=================='
+        println '==================blackhand transform end=================='
 
     }
 }
