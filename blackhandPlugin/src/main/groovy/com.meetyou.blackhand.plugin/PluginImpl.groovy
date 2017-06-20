@@ -179,7 +179,38 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                     //处理
                     processTheClazz(entry, cv, classWriter)
                 }
+            }else if(key_words[0].startsWith("replaceExtends")){
+                //替换准则有几种
+                if(key_words[1].startsWith("whichExtends")){
+                    //替换继承
+                    String clazz = key_words[2];
+                    if(cv.mSuperName.equals(clazz)){
+                        processTheClazzForChangeExtends(entry, cv, classWriter)
+                    }
+                }else if(key_words[1].startsWith("whichImplements")){
+                    //替换实现接口
+                    String clazz = key_words[2];
+                    if(cv.mInterfaces != null){
+                        for(String im : cv.mInterfaces){
+                            if(im.replace("/",".").equals(clazz)){
+                                processTheClazzForChangeExtends(entry, cv, classWriter)
+                            }
+                        }
+
+                    }
+
+                }
             }
+        }
+    }
+
+    //修改class extends
+    void processTheClazzForChangeExtends(Map.Entry<String,ArrayList<ConfigurationDO>> entry,BlackhandClassVisitor cv, ClassWriter classWriter) {
+        println "Blackhand working ----- > processing this clazz "
+        for(ConfigurationDO configurationDO : entry.value){
+            String[] con = configurationDO.strings
+            String superClazz = con[0].replace(".","/");
+            classWriter.visit(cv.mVersion,cv.mAccess,cv.mName,cv.mSignature,superClazz,cv.mInterfaces)
         }
     }
 
@@ -262,6 +293,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                                     classReader.accept(cv, EXPAND_FRAMES)
 
                                     //处理类数据
+                                    println cv.mClazzName + ";" + cv.mSuperName
                                     processMetas(cv, classWriter);
                                     //写入
                                     byte[] code = classWriter.toByteArray()

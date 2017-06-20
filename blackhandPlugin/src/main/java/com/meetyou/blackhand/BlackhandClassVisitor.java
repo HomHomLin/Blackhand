@@ -2,6 +2,7 @@ package com.meetyou.blackhand;
 
 
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -22,6 +23,10 @@ public class BlackhandClassVisitor extends ClassVisitor {
     public String mClazzName;
     public String[] mInterfaces;
     public ArrayList<BlackhandMethodInfo> mMethods;
+    public int mVersion;
+    public int mAccess;
+    public String mSignature;
+    public String mName;
 
     public BlackhandClassVisitor(int api, ClassVisitor cv) {
         super(api, cv);
@@ -31,9 +36,17 @@ public class BlackhandClassVisitor extends ClassVisitor {
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
         mClazzName = name.replace("/",".");
+        mName = name;
         mSuperName = superName.replace("/",".");
         mInterfaces = interfaces;
+        mVersion = version;
+        mAccess = access;
+        mSignature = signature;
+    }
 
+    @Override
+    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        return super.visitField(access, name, desc, signature, value);
     }
 
     @Override

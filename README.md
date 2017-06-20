@@ -19,7 +19,7 @@ Blackhand可以帮助你在编译期往需要的class中新增方法。
 在主工程的build.gradle中加入
 
 ```groovy
-classpath 'com.meiyou.sdk.plugin:blackhand-compiler:0.0.8-SNAPSHOT'
+classpath 'com.meiyou.sdk.plugin:blackhand-compiler:0.0.10-SNAPSHOT'
 ```
 
 在你的主工程中加入插件,如果你要结合anna,需要将其置于Anna前
@@ -31,7 +31,7 @@ apply plugin: 'blackhand'
 
 ## 用法
 
-### 作用域
+### 新增方法作用域
 
 在主工程根目录创建文件"blackhand.pro",书写内容如下:
 
@@ -100,6 +100,28 @@ apply plugin: 'blackhand'
       return 1;
     }
 ```
+
+### 修改继承
+
+Blackhand可以修改类的继承,将原本的继承改为其他类。同样需要在pro配置作用域。
+
+```groovy
+-replaceExtends whichExtends com.meetyou.blackhand.demo.MainActivity{
+    android.support.v7.app.AppCompatActivity;
+}
+```
+
+
+上述配置意味,将继承com.meetyou.blackhand.demo.MainActivity的类改为继承android.support.v7.app.AppCompatActivity。
+
+
+```groovy
+-replaceExtends whichImplements com.meetyou.blackhand.demo.MainActivity{
+    android.support.v7.app.AppCompatActivity;
+}
+```
+
+这个表示实现了这个接口的将被修改。
 
 ## 完成编译
 

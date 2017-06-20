@@ -4,3 +4,7 @@
     public V onTESTv ();
     private_final I ontesti () 1;
 }
+
+-replaceExtends whichExtends com.meetyou.blackhand.demo.MainActivity{
+    android.support.v7.app.AppCompatActivity;
+}
