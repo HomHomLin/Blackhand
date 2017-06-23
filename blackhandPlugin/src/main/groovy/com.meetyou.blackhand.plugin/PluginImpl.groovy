@@ -206,18 +206,20 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
 
     //修改class extends
     void processTheClazzForChangeExtends(Map.Entry<String,ArrayList<ConfigurationDO>> entry,BlackhandClassVisitor cv, ClassWriter classWriter) {
-        println "Blackhand working ----- > processing this clazz "
+        println "Blackhand working processTheClazzForChangeExtends----- > processing this clazz "
         for(ConfigurationDO configurationDO : entry.value){
             String[] con = configurationDO.strings
             String superClazz = con[0].replace(".","/");
+            println "Blackhand working ----- > processing"
             classWriter.visit(cv.mVersion,cv.mAccess,cv.mName,cv.mSignature,superClazz,cv.mInterfaces)
         }
     }
 
     void processTheClazz(Map.Entry<String,ArrayList<ConfigurationDO>> entry,BlackhandClassVisitor cv, ClassWriter classWriter){
-        println "Blackhand working ----- > processing this clazz "
+        println "Blackhand working processTheClazz----- > processing this clazz "
         for(ConfigurationDO configurationDO : entry.value){
 
+            println "Blackhand working ----- > processing"
             String[] con = configurationDO.strings
             //处理修饰符
             int access = processAccess(con[0])
@@ -250,6 +252,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                     params + return_type,
                     null,
                     null);
+            println "Blackhand working insert----- > " + methodName
             mw.visitCode();
             if(return_v != null){
                 if(return_v.trim().equals("null") || return_v.trim().equals("NULL")){
