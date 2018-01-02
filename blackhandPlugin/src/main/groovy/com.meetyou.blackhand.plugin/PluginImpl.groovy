@@ -12,8 +12,10 @@ import com.meetyou.blackhand.plugin.MeetyouConfiguration
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -46,6 +48,27 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
 
         def android = project.extensions.getByType(AppExtension);
         android.registerTransform(this)
+
+        project.afterEvaluate {
+            project.android.applicationVariants.each { variant ->
+                println variant.name
+                //替换keep文件
+                def collectTask = project.getTasks().findByName("merge${variant.name.capitalize()}Resources")//collectZroTestDebugMultiDexComponents
+                if (collectTask != null) {
+                    collectTask.doLast(new Action<Task>() {
+                        @Override
+                        void execute(Task task) {
+                            println "collect${variant.name.capitalize()}MultiDexComponents action execute!mini main dex生效了!!!!" + project.getProjectDir()
+                            def dir = new File(project.getProjectDir().absolutePath + "/build/intermediates/res/merged/${variant.dirName}/layout");
+                            String[] s = dir.list();
+                            for (String s1 : s) {
+                                println "--->" + s1
+                            }
+                        }
+                    })
+                }
+            }
+        }
 
         println '==============blackhand apply end=================='
     }
@@ -133,6 +156,33 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
             }
         }
         return access;
+    }
+
+    void processMetas4Delete(BlackhandClassVisitor cv) throws Exception{
+//        println cv.mClazzName + "---" + cv.mSuperName
+//        for(BlackhandMethodInfo info : cv.mMethods){
+//            println info.toString()
+//        }
+
+        HashMap<String,ArrayList<ConfigurationDO>> configurations = meetyouConfiguration.getMap();
+        for (Map.Entry<String,ArrayList<ConfigurationDO>> entry : configurations.entrySet()) {
+            String key = entry.key;
+            String[] key_words = key.trim().split(" ");
+            if(key_words[0].startsWith("delete")){
+                if(key_words[1].startsWith("method")){
+                    //删除方法
+//                    println "Blackhand working ----- > processing this clazz "
+                    for(ConfigurationDO configurationDO : entry.value){
+
+                        String[] con = configurationDO.strings
+
+                        //将解析的删除操作放入
+                        cv.mNeedDeletes.add(con);
+
+                    }
+                }
+            }
+        }
     }
 
     boolean needInsert(BlackhandClassVisitor cv, String methodName, String params){
@@ -293,6 +343,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                                     ClassReader classReader = new ClassReader(file.bytes)
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
                                     BlackhandClassVisitor cv = new BlackhandClassVisitor(Opcodes.ASM5,classWriter)
+                                    processMetas4Delete(cv)
                                     classReader.accept(cv, EXPAND_FRAMES)
 
                                     //处理类数据
@@ -357,6 +408,7 @@ public class PluginImpl extends Transform implements Plugin<Project> ,Opcodes{
                             ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
                             ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
                             BlackhandClassVisitor cv = new BlackhandClassVisitor(Opcodes.ASM5,classWriter)
+                            processMetas4Delete(cv)
                             classReader.accept(cv, EXPAND_FRAMES)
                             //处理类数据
                             processMetas(cv, classWriter);

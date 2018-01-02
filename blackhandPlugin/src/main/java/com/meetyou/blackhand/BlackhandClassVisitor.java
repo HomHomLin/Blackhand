@@ -27,6 +27,7 @@ public class BlackhandClassVisitor extends ClassVisitor {
     public int mAccess;
     public String mSignature;
     public String mName;
+    public ArrayList<String[]> mNeedDeletes = new ArrayList<>();
 
     public BlackhandClassVisitor(int api, ClassVisitor cv) {
         super(api, cv);
@@ -62,6 +63,22 @@ public class BlackhandClassVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature,
                                      String[] exceptions) {
+        for(String[] con : mNeedDeletes){
+            //返回类型
+            String return_type = con[1];
+
+            //方法名
+            String methodName = con[2];
+
+            //参数
+            String params = con[3];
+
+            if(name.equals(methodName) && desc.equals(params + return_type)){
+                //该方法需要被删除
+                return null;
+            }
+
+        }
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions);
         methodVisitor = new AdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc) {
 

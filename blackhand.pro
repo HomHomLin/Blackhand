@@ -23,3 +23,6 @@
     public Landroid/content/res/AssetManager; getAssets () null;
     public Landroid/content/res/Resources/Theme; getTheme () null;
 }
+-delete method {
+    public V onReceivedSslError (Landroid/webkit/WebView;Landroid/webkit/SslErrorHandler;Landroid/net/http/SslError;);
+}
