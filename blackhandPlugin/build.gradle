@@ -8,6 +8,7 @@ dependencies {
     compile 'com.android.tools.build:gradle:2.2.2'
     compile 'org.ow2.asm:asm:5.0.3'
     compile 'org.ow2.asm:asm-commons:5.0.3'
+    compile 'dom4j:dom4j:1.6.1'
 }
 
 repositories {

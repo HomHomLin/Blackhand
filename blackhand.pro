@@ -23,6 +23,13 @@
     public Landroid/content/res/AssetManager; getAssets () null;
     public Landroid/content/res/Resources/Theme; getTheme () null;
 }
--delete method {
+#-delete method {
+#    public V onReceivedSslError (Landroid/webkit/WebView;Landroid/webkit/SslErrorHandler;Landroid/net/http/SslError;);
+#}
+#-exchangeXML layout{
+#    com.meetyou.blackhand.demo com.linhh.blackhand.demo;
+#}
+-printInfo method {
     public V onReceivedSslError (Landroid/webkit/WebView;Landroid/webkit/SslErrorHandler;Landroid/net/http/SslError;);
+    public V test222 (II);
 }
